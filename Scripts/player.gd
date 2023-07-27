@@ -1,16 +1,23 @@
 extends CharacterBody3D
 
 
-const SPEED = 1
+const SPEED = 8
 const AIR_SPEED = 0.25
 const JUMP_VELOCITY = 6
 const MAX_SPEED = 15
+const MAX_AIR_SPEED = 15
+const MAX_GRAPPLE_SPEED = 25
 const GROUND_FRICTION = .3
-const AIR_FRICTION = 0.3
+const AIR_FRICTION = 0.5
 const GRAPPLE_STRENGTH = 0.1
-const MAX_GRAPPLE_FORCE = 1
+const MAX_GRAPPLE_FORCE = 0.5
 const GRAPPLE_RESET_TIME = 1.5
 const GRAPPLE_CONNECT_TIME = 0.75
+const GRAPPLE_CANCLE_HOP_STRENGTH = 15
+const DASH_COOLDOWN = 3
+const DASH_STRENGTH = 15
+const SPRINT_MODIFIER = 1.5
+const HEAD_TILT_MAX = 10
 # Get the gravity from the project settings to be synced with RigidBody nodes.
 var gravity = 20
 
@@ -26,16 +33,20 @@ var gravity = 20
 @onready var grapple_pos = null
 @onready var grapple_og_length = null
 @onready var can_grapple = true
+@onready var can_dash = true
+@onready var dash_timer := $timers/dash_timer
+
 func _physics_process(delta):
 	move(delta)
 	if Input.is_action_just_pressed("grapple"):
 		if grappling:
+			if grapple_pos.y > position.y:
+				velocity += Vector3.UP * GRAPPLE_CANCLE_HOP_STRENGTH
 			stopGrapple()
 		elif can_grapple:
 			grapple.force_raycast_update()
 			if grapple.get_collider():
 				startGrapple(grapple.get_collision_point())
-
 	if grappling:
 		handleGrapple()
 	move_and_slide()
@@ -43,12 +54,15 @@ func _physics_process(delta):
 func move(delta):
 	var input_dir = Input.get_vector("left", "right", "forward", "back")
 	var direction = (neck.transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+
 	if is_on_floor():
 		var new_velocity = Vector3(velocity.x, 0, velocity.z)
-		new_velocity.x += direction.x * SPEED
-		new_velocity.z += direction.z * SPEED
-		if is_on_floor() and new_velocity.length() > MAX_SPEED:
-			new_velocity = direction*MAX_SPEED
+		new_velocity.x = direction.x * SPEED
+		new_velocity.z = direction.z * SPEED
+		if Input.is_action_pressed("sprint"):
+			new_velocity *= SPRINT_MODIFIER
+		#if is_on_floor() and new_velocity.length() > MAX_SPEED:
+			#new_velocity = direction*MAX_SPEED
 		velocity.x = new_velocity.x
 		velocity.z = new_velocity.z
 		
@@ -58,12 +72,22 @@ func move(delta):
 		if Input.is_action_just_pressed("ui_accept"):
 			velocity.y = JUMP_VELOCITY
 			print("JUST JUMPED")
+		if velocity.length_squared() > 0:
+			$characterNeck/headAnim.play("head_bob")
 	else:
+		var new_velocity = velocity
+		new_velocity += direction * AIR_SPEED
 		if not grappling:
-			velocity.y -= gravity * delta
-		velocity.x += direction.x * AIR_SPEED
-		velocity.z += direction.z * AIR_SPEED
-		
+			if new_velocity.length() > MAX_AIR_SPEED:
+				new_velocity = velocity.move_toward(velocity.normalized()*MAX_AIR_SPEED, AIR_FRICTION)
+				#new_velocity = velocity.normalized() * MAX_AIR_SPEED
+			new_velocity.y -= gravity * delta
+		velocity = new_velocity
+		#camera.
+	if Input.is_action_just_pressed("dash") and can_dash:# and not grappling:
+		dash(direction)
+		#velocity.move_toward(Vector3.ZERO, AIR_FRICTION)
+	#print(velocity.length())
 func _unhandled_input(event: InputEvent):
 	if event is InputEventMouseButton:
 		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
@@ -100,16 +124,32 @@ func handleGrapple():
 	var grapple_direction = grapple_pos - global_position
 	var grapple_length = grapple_direction.length() #- grapple_og_length
 	var grapple_force = clamp(GRAPPLE_STRENGTH * grapple_length/2, 0, MAX_GRAPPLE_FORCE)
-	velocity += grapple_force * grapple_direction.normalized()
+	var new_velocity = velocity + grapple_force * grapple_direction.normalized()
+	if new_velocity.length() > MAX_GRAPPLE_SPEED:
+		new_velocity = velocity.move_toward(velocity.normalized()*MAX_GRAPPLE_SPEED, AIR_FRICTION)
+	velocity = new_velocity
 	grapple_node.look_at(grapple_pos, Vector3.UP)
 	grapple_line.mesh.height = grapple_length + 1
 	#grapple_line.translation.z = grapple_length / -2
 	pass
-
+	
+func dash(direction):
+	print("JUST DASHED")
+	can_dash = false
+	dash_timer.start(DASH_COOLDOWN)
+	if direction == Vector3.ZERO:
+		velocity = Vector3.UP * DASH_STRENGTH
+	else:
+		velocity = direction * DASH_STRENGTH
+		
 func resetGrapple():
 	print("RESETING GRAPPLE")
 	can_grapple = true
 
 func _on_grapple_reset_timer_timeout():
 	resetGrapple()
+	pass # Replace with function body.
+
+func _on_dash_timer_timeout():
+	can_dash = true
 	pass # Replace with function body.

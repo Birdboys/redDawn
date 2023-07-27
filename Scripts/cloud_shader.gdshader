@@ -3,8 +3,9 @@ render_mode vertex_lighting;
 uniform sampler2D noise1;
 uniform sampler2D noise2;
 uniform sampler2D noise3;
+uniform vec3 cloud_color : source_color;
 const float noise_speed = 0.002;
-uniform float noise_strength = 40.0;
+uniform float noise_strength = 60.0;
 
 float get_noise(vec2 uv) {
 	float offset = 0.0;
@@ -28,7 +29,8 @@ void vertex() {
   vec2 noise_cord = vec2(UV.x+(TIME*noise_speed), UV.y+(TIME*noise_speed));
   float height = get_noise(noise_cord);
   VERTEX.y = noise_strength * height;
-  COLOR.xyz = vec3(height);
+  COLOR.xyz = height * cloud_color;
+  //COLOR.rgb = vec3(230./255., 202./255., 161./255.);
   //NORMAL = getNormal(noise_cord,  1.0 / float(textureSize(noise1, 0).x));
 }
 void fragment() {
