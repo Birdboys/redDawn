@@ -29,7 +29,7 @@ void vertex() {
   float height = get_noise(noise_cord);
   VERTEX.y = noise_strength * height;
   COLOR.xyz = vec3(height);
-  NORMAL = getNormal(noise_cord,  1.0 / float(textureSize(noise1, 0).x));
+  //NORMAL = getNormal(noise_cord,  1.0 / float(textureSize(noise1, 0).x));
 }
 void fragment() {
   ALBEDO = COLOR.xyz;
