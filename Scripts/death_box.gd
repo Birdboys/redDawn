@@ -13,4 +13,6 @@ func _process(delta):
 
 func _on_area_entered(area):
 	area.get_parent().position = Vector3(0,1,0)
+	if area.get_parent().has_method("stopGrapple"):
+		area.get_parent().stopGrapple()
 	pass # Replace with function body.

@@ -152,8 +152,6 @@ shape = SubResource("ConvexPolygonShape3D_ld3pi")
 [node name="characterMesh" type="MeshInstance3D" parent="character"]
 mesh = SubResource("CapsuleMesh_lq4tm")
 
-[node name="grapple_timer" type="Timer" parent="character"]
-
 [node name="CanvasLayer" type="CanvasLayer" parent="character"]
 
 [node name="Control" type="Control" parent="character/CanvasLayer"]
@@ -181,6 +179,12 @@ grow_vertical = 2
 scale = Vector2(0.25, 0.25)
 mouse_filter = 2
 texture = ExtResource("3_dq7g8")
+
+[node name="timers" type="Node" parent="character"]
+
+[node name="grapple_timer" type="Timer" parent="character/timers"]
+
+[node name="grapple_reset_timer" type="Timer" parent="character/timers"]
 
 [node name="death_box" type="Area3D" parent="."]
 script = ExtResource("2_gad7t")
@@ -351,5 +355,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -32.1153, 0)
 mesh = SubResource("PlaneMesh_gnc3i")
 surface_material_override/0 = SubResource("ShaderMaterial_414p4")
 
-[connection signal="timeout" from="character/grapple_timer" to="character" method="_on_grapple_timer_timeout"]
+[connection signal="timeout" from="character/timers/grapple_timer" to="character" method="_on_grapple_timer_timeout"]
+[connection signal="timeout" from="character/timers/grapple_reset_timer" to="character" method="_on_grapple_reset_timer_timeout"]
 [connection signal="area_entered" from="death_box" to="death_box" method="_on_area_entered"]
