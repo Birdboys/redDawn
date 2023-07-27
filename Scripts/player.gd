@@ -8,11 +8,11 @@ const MAX_SPEED = 15
 const GROUND_FRICTION = .3
 const AIR_FRICTION = 0.3
 const GRAPPLE_STRENGTH = 0.1
-const MAX_GRAPPLE_FORCE = 3
-const GRAPPLE_RESET_TIME = 3
-const GRAPPLE_CONNECT_TIME = 0.3
+const MAX_GRAPPLE_FORCE = 1
+const GRAPPLE_RESET_TIME = 1.5
+const GRAPPLE_CONNECT_TIME = 0.75
 # Get the gravity from the project settings to be synced with RigidBody nodes.
-var gravity = 15
+var gravity = 20
 
 @onready var neck := $characterNeck
 @onready var camera := $characterNeck/characterCam
@@ -20,6 +20,8 @@ var gravity = 15
 @onready var grapple := $characterNeck/characterCam/grappleRay
 @onready var grapple_timer := $timers/grapple_timer
 @onready var grapple_reset_timer := $timers/grapple_reset_timer
+@onready var grapple_line := $grapple_node/grapple_line
+@onready var grapple_node := $grapple_node
 @onready var grappling = false
 @onready var grapple_pos = null
 @onready var grapple_og_length = null
@@ -57,7 +59,8 @@ func move(delta):
 			velocity.y = JUMP_VELOCITY
 			print("JUST JUMPED")
 	else:
-		velocity.y -= gravity * delta
+		if not grappling:
+			velocity.y -= gravity * delta
 		velocity.x += direction.x * AIR_SPEED
 		velocity.z += direction.z * AIR_SPEED
 		
@@ -83,19 +86,24 @@ func startGrapple(pos):
 	grapple_og_length = (grapple_pos-global_position).length()
 	grapple_timer.start(GRAPPLE_CONNECT_TIME)
 	can_grapple = false
+	grapple_node.visible = true
 	
 func stopGrapple():
 	grappling = false
 	grapple_pos = null
 	grapple_timer.stop()
 	grapple_reset_timer.start(GRAPPLE_RESET_TIME)
+	grapple_node.visible = false
 	print("ENDING GRAPPLE")
 
 func handleGrapple():
 	var grapple_direction = grapple_pos - global_position
 	var grapple_length = grapple_direction.length() #- grapple_og_length
-	var grapple_force = clamp(GRAPPLE_STRENGTH * grapple_length, 0, MAX_GRAPPLE_FORCE)
+	var grapple_force = clamp(GRAPPLE_STRENGTH * grapple_length/2, 0, MAX_GRAPPLE_FORCE)
 	velocity += grapple_force * grapple_direction.normalized()
+	grapple_node.look_at(grapple_pos, Vector3.UP)
+	grapple_line.mesh.height = grapple_length + 1
+	#grapple_line.translation.z = grapple_length / -2
 	pass
 
 func resetGrapple():

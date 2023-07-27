@@ -1,4 +1,4 @@
-[gd_scene load_steps=33 format=3 uid="uid://duigncbga3y8d"]
+[gd_scene load_steps=35 format=3 uid="uid://duigncbga3y8d"]
 
 [ext_resource type="Script" path="res://Scripts/player.gd" id="1_hisos"]
 [ext_resource type="Script" path="res://Scripts/test_environment.gd" id="1_nu2dg"]
@@ -22,12 +22,18 @@ sky_material = SubResource("ProceduralSkyMaterial_vx24p")
 background_mode = 2
 sky = SubResource("Sky_w0gwe")
 ambient_light_color = Color(0.611765, 0.2, 0.2, 1)
+ambient_light_energy = 1.95
 tonemap_mode = 2
+ssr_enabled = true
+ssao_enabled = true
 glow_enabled = true
-fog_enabled = true
-fog_light_color = Color(0.639216, 0.290196, 0.184314, 1)
 fog_density = 0.0205
-fog_sky_affect = 0.379
+fog_sky_affect = 0.508
+fog_height = -20.0
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.0246
+volumetric_fog_albedo = Color(0.933333, 0.933333, 0.933333, 1)
+volumetric_fog_emission = Color(0.423529, 0.423529, 0.423529, 1)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_44l8h"]
 albedo_color = Color(0.301961, 0.0980392, 0.2, 1)
@@ -49,8 +55,16 @@ points = PackedVector3Array(-0.5, -0.5, 0, -0.497651, -0.5, -0.0490407, -0.49246
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_lq4tm"]
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_b7jug"]
+albedo_color = Color(0.239216, 0.239216, 0.239216, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_2jglb"]
+material = SubResource("StandardMaterial3D_b7jug")
+top_radius = 0.1
+bottom_radius = 0.1
+
 [sub_resource type="BoxShape3D" id="BoxShape3D_8wos3"]
-size = Vector3(60, 1, 60)
+size = Vector3(200, 1, 200)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_anc61"]
 albedo_color = Color(0.309804, 0.235294, 0.309804, 1)
@@ -152,9 +166,9 @@ shape = SubResource("ConvexPolygonShape3D_ld3pi")
 [node name="characterMesh" type="MeshInstance3D" parent="character"]
 mesh = SubResource("CapsuleMesh_lq4tm")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="character"]
+[node name="HUD" type="CanvasLayer" parent="character"]
 
-[node name="Control" type="Control" parent="character/CanvasLayer"]
+[node name="Control" type="Control" parent="character/HUD"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -163,7 +177,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="TextureRect" type="TextureRect" parent="character/CanvasLayer/Control"]
+[node name="TextureRect" type="TextureRect" parent="character/HUD/Control"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -185,6 +199,14 @@ texture = ExtResource("3_dq7g8")
 [node name="grapple_timer" type="Timer" parent="character/timers"]
 
 [node name="grapple_reset_timer" type="Timer" parent="character/timers"]
+
+[node name="grapple_node" type="Node3D" parent="character"]
+visible = false
+
+[node name="grapple_line" type="MeshInstance3D" parent="character/grapple_node"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+mesh = SubResource("CylinderMesh_2jglb")
+skeleton = NodePath("../..")
 
 [node name="death_box" type="Area3D" parent="."]
 script = ExtResource("2_gad7t")
